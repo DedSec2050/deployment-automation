@@ -1,0 +1,9 @@
+creds.json
+keys
+# Terraform-related files to ignore
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+*.tfvars
+*.tfplan
+.terraform.lock.hcl
