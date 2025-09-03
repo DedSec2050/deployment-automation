@@ -134,10 +134,38 @@ resource "azurerm_network_security_group" "nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  # Cloudflare outbound access
+  security_rule {
+  name                       = "AllowCloudflareOutbound"
+  priority                   = 100
+  direction                  = "Outbound"
+  access                     = "Allow"
+  protocol                   = "Tcp"
+  destination_port_range      = "443"
+  destination_address_prefix  = "0.0.0.0/0"
+  source_address_prefix       = "*"
+  }
 }
 
 # Associate NSG with NIC
 resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
   network_interface_id      = azurerm_network_interface.nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
+resource "azurerm_key_vault" "kv" {
+  name                        = "${var.prefix}-kv"
+  location                    = azurerm_resource_group.rg.location
+  resource_group_name         = azurerm_resource_group.rg.name
+  tenant_id                   = var.tenant_id
+  sku_name                     = "standard"
+  soft_delete_retention_days  = 90
+
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.admin_object_id
+    secret_permissions = ["get", "list", "set", "delete"]
+    key_permissions    = ["get", "list", "create", "delete"]
+  }
 }
