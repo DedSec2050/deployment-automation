@@ -1,8 +1,9 @@
 import os
 import json
 
-# Directory to search
+# Paths
 current_dir = os.getcwd()
+ansible_env_file = os.path.join(current_dir, "ansible", ".env")
 
 # First, check if there is an "azure" folder in the current directory.
 azure_dir = os.path.join(current_dir, "azure")
@@ -35,17 +36,41 @@ if not file_path:
 with open(file_path, "r") as f:
     data = json.load(f)
 
-# Extract the IP addresses
+# Extract the outputs
 outputs = data.get("outputs", {})
 public_ip = outputs.get("vm_public_ip", {}).get("value")
 private_ip = outputs.get("vm_private_ip", {}).get("value")
+ssh_conn   = outputs.get("ssh_connection_string", {}).get("value")
+
+# Prepare environment variables
+env_vars = {}
 
 if public_ip:
-    print(f"VM Public IP: {public_ip}")
+    env_vars["VM_PUBLIC_IP"] = str(public_ip)
 else:
     print("vm_public_ip not found.")
 
 if private_ip:
-    print(f"VM Private IP: {private_ip}")
+    env_vars["VM_PRIVATE_IP"] = str(private_ip)
 else:
     print("vm_private_ip not found.")
+
+if ssh_conn:
+    ssh_parts = ssh_conn.strip().split()
+    if len(ssh_parts) == 2 and "@" in ssh_parts[1]:
+        user = ssh_parts[1].split("@")[0]
+        host = ssh_parts[1].split("@")[1]
+        env_vars["VM_SSH_USER"] = user
+        env_vars["VM_SSH_HOST"] = host
+    else:
+        print("Unexpected format in ssh_connection_string")
+else:
+    print("ssh_connection_string not found.")
+
+# Write .env file inside ./ansible
+os.makedirs(os.path.dirname(ansible_env_file), exist_ok=True)
+with open(ansible_env_file, "w") as f:
+    for key, value in env_vars.items():
+        f.write(f"{key}={value}\n")
+
+print(f".env file written to {ansible_env_file}")

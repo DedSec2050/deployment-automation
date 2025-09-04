@@ -1,5 +1,7 @@
 creds.json
 keys
+ansible
+.env
 # Terraform-related files to ignore
 .terraform/
 terraform.tfstate
