@@ -42,7 +42,7 @@ EOF
 # === Main Playbook (single tasks.yml) ===
 cat > tasks.yml <<'EOF'
 ---
-- name: Configure VM (packages, hardening, podman, cloudflare)
+- name: Configure VM (users, packages, hardening, podman, cloudflare)
   hosts: vm
   become: true
   tasks:
@@ -68,6 +68,36 @@ cat > tasks.yml <<'EOF'
       ansible.builtin.package:
         name: podman
         state: present
+
+    - name: Create admin user
+      ansible.builtin.user:
+        name: "admin@200630.xyz"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+
+    - name: Create user without sudo
+      ansible.builtin.user:
+        name: "user@200630.xyz"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+
+    - name: Set password for admin user
+      ansible.builtin.user:
+        name: "admin@200630.xyz"
+        password: "{{ 'AdminPass123' | password_hash('sha512') }}"  # Adjust as needed
+
+    - name: Set password for regular user
+      ansible.builtin.user:
+        name: "user@200630.xyz"
+        password: "{{ 'UserPass123' | password_hash('sha512') }}"  # Adjust as needed
+
+    - name: Add admin user to sudo group
+      ansible.builtin.user:
+        name: "admin@200630.xyz"
+        groups: sudo
+        append: yes
 
     - name: Download Cloudflare tunnel package
       ansible.builtin.get_url:
@@ -103,6 +133,5 @@ result_format = yaml
 [ssh_connection]
 pipelining = True
 EOF
-
 
 echo "[*] Done! Run with: ansible-playbook tasks.yml"

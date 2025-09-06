@@ -24,12 +24,12 @@ print(f"Searching in directory: {directory}")
 # Search for the terraform.tfstate.backup file
 file_path = None
 for root, dirs, files in os.walk(directory):
-    if "terraform.tfstate.backup" in files:
-        file_path = os.path.join(root, "terraform.tfstate.backup")
+    if "terraform.tfstate" in files:
+        file_path = os.path.join(root, "terraform.tfstate")
         break
 
 if not file_path:
-    print("terraform.tfstate.backup file not found.")
+    print("terraform.tfstate file not found.")
     exit(1)
 
 # Read and parse the JSON file
